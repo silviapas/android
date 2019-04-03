@@ -39,6 +39,7 @@ import com.owncloud.android.datamodel.FileDataStorageManager
 import com.owncloud.android.datamodel.OCFile
 import com.owncloud.android.files.services.FileDownloader
 import com.owncloud.android.lib.common.utils.Log_OC
+import com.owncloud.android.operations.CreateFolderOperation
 import com.owncloud.android.operations.RefreshFolderOperation
 import com.owncloud.android.operations.RenameFileOperation
 import com.owncloud.android.providers.cursors.FileCursor
@@ -99,7 +100,7 @@ class DocumentsStorageProvider : DocumentsProvider() {
         val browsedDir = currentStorageManager!!.getFileById(folderId)
 
         // Create result cursor before syncing folder again, in order to enable faster loading
-        for (file in currentStorageManager!!.getFolderContent(browsedDir,false)) {
+        for (file in currentStorageManager!!.getFolderContent(browsedDir, false)) {
             resultCursor.addFile(file)
         }
 
@@ -183,6 +184,26 @@ class DocumentsStorageProvider : DocumentsProvider() {
         return result
     }
 
+    override fun createDocument(parentDocumentId: String, mimeType: String, displayName: String): String {
+        Log_OC.d(TAG, "Create Document ParentID $parentDocumentId Type $mimeType DisplayName $displayName")
+        val parentDocId = parentDocumentId.toLong()
+        updateCurrentStorageManagerIfNeeded(parentDocId)
+
+        val parentDocument = currentStorageManager?.getFileById(parentDocId)
+            ?: throw FileNotFoundException("Folder $parentDocId not found")
+
+        if (mimeType.equals(MIME_TYPE_FOLDER)) {
+
+            return createFolder(parentDocument, displayName)
+
+        } else {
+
+            Log_OC.d(TAG, "Not Supported yet")
+            return super.createDocument(parentDocumentId, mimeType, displayName)
+
+        }
+    }
+
     @TargetApi(21)
     override fun renameDocument(documentId: String, displayName: String): String? {
         val docId = documentId.toLong()
@@ -204,6 +225,27 @@ class DocumentsStorageProvider : DocumentsProvider() {
         }
 
         return null
+    }
+
+    private fun createFolder(parentDocument: OCFile, displayName: String): String {
+        val newPath = parentDocument.remotePath + displayName + OCFile.PATH_SEPARATOR
+
+        Log_OC.d(TAG, "Trying to create folder with path $newPath")
+
+        val createFolderOperation = CreateFolderOperation(newPath, false)
+        val result = createFolderOperation.execute(currentStorageManager, context)
+
+        if (!result.isSuccess) {
+            throw java.lang.UnsupportedOperationException("Failed to create new folder")
+        } else {
+            val newFolder = currentStorageManager?.getFileByPath(newPath)
+                ?: throw FileNotFoundException("Folder $newPath not found")
+
+            syncRequired = false
+            context?.contentResolver?.notifyChange(toNotifyUri(toUri(parentDocument.fileId.toString())), null)
+
+            return newFolder.fileId.toString()
+        }
     }
 
     private fun updateCurrentStorageManagerIfNeeded(docId: Long) {
@@ -271,7 +313,7 @@ class DocumentsStorageProvider : DocumentsProvider() {
 
     private fun findFiles(root: OCFile, query: String): Vector<OCFile> {
         val result = Vector<OCFile>()
-        for (f in currentStorageManager!!.getFolderContent(root,false)) {
+        for (f in currentStorageManager!!.getFolderContent(root, false)) {
             if (f.isFolder) {
                 result.addAll(findFiles(f, query))
             } else {
@@ -295,6 +337,7 @@ class DocumentsStorageProvider : DocumentsProvider() {
 
     companion object {
         private val TAG = DocumentsStorageProvider::class.java.toString()
+        private val MIME_TYPE_FOLDER = "vnd.android.document/directory"
         private var rootIdToStorageManager: MutableMap<Long, FileDataStorageManager> = HashMap()
     }
 }
