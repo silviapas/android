@@ -230,6 +230,3 @@ static def getGitOriginRemote() {
     def found = values.find { it.startsWith("origin") && it.endsWith("(push)") }
     return found.replace("origin", "").replace("(push)", "").replace(".git", "").trim()
 }
-
-
-/*fottiti*/
