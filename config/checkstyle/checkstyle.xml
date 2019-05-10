@@ -4,7 +4,11 @@
         "https://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 
 <module name="Checker">
-  <module name="TreeWalker">
+
+      <module name="LocalVariableName"/>
+      <module name="MethodName"/>
+      <module name="PackageName"/>
+      <module name="ParameterName"/>
     <!-- Blundell specific checks -->
 
   </module>
