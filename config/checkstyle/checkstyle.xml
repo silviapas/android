@@ -6,6 +6,10 @@
 <module name="Checker">
   <module name="TreeWalker">
 
+      <module name="LocalVariableName"/>
+      <module name="MethodName"/>
+      <module name="PackageName"/>
+      <module name="ParameterName"/>
     <!-- Blundell specific checks -->
 
   </module>
