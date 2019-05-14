@@ -4,34 +4,6 @@ apply plugin: 'kotlin-android'
 def commitSHA1 = 'COMMIT_SHA1'
 def gitRemote = 'GIT_REMOTE'
 
-apply plugin: 'findbugs'
-task findbugs(type: FindBugs) {
-    description 'Find bugs mainly design flaws, bad practices, multithreaded correctness and code vulnerabilities.'
-    group 'verification'
-    excludeFilter = file("$project.rootDir/config/findbugs/filterFindBugs.xml")
-
-    effort 'max'
-    reportLevel = "high"
-    classpath = files()
-
-    reports {
-        xml.enabled = false
-        html.enabled = true
-        html.destination = "C:\\Users\\Silvia\\Desktop\\findbugs.html"
-    }
-}
-
-findbugs {
-    toolVersion '3.0.1'
-    ignoreFailures true
-    effort 'max'
-    reportLevel 'high'
-    excludeBugsFilter = file("$rootProject.projectDir/config/findbugs/plugins/excludeBugsFilter.xml")
-}
-
-
-
-
 dependencies {
     /// dependencies for app building
     implementation project(':owncloud-android-library:owncloudComLibrary')
