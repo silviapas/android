@@ -209,3 +209,9 @@ jacoco{
     toolVersion "0.8.4"
     reportsDir = file("$buildDir/customJacocoReportDir")
 }
+tasks.withType(Test) {
+    enabled true
+    jacoco.includeNoLocationClasses = true
+    scanForTestClasses = false
+    include "**/*Test.class"
+}
