@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'jacoco'
+
 
 def commitSHA1 = 'COMMIT_SHA1'
 def gitRemote = 'GIT_REMOTE'
@@ -43,8 +45,6 @@ dependencies {
 
     //Zooming Android ImageView.
     implementation 'com.github.chrisbanes:PhotoView:2.1.4'
-
-    implementation 'com.gitlab.ownclouders:dav4android:oc_support'
 
     // Convert Java Objects into JSON and back
     implementation 'com.google.code.gson:gson:2.8.5'
@@ -192,4 +192,43 @@ static def getGitOriginRemote() {
 
     def found = values.find { it.startsWith("origin") && it.endsWith("(push)") }
     return found.replace("origin", "").replace("(push)", "").replace(".git", "").trim()
+}
+android {
+    buildTypes {
+        debug {
+            testCoverageEnabled = true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+jacoco{
+    toolVersion "0.8.4"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+tasks.withType(Test) {
+    enabled true
+    jacoco.includeNoLocationClasses = true
+    scanForTestClasses = false
+    include "**/*Test.class"
+}
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport', 'test', 'connectedAndroidTest']) {
+
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def debugTree = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: fileFilter)
+    def mainSrc = "$project.projectDir/src/main/java"
+
+    sourceDirectories = files([mainSrc])
+    classDirectories = files([debugTree])
+    executionData = fileTree(dir: project.buildDir, includes: [
+            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+    ])
 }

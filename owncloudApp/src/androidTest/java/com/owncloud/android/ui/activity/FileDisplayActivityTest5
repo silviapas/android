@@ -1,0 +1,79 @@
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.allOf;
+
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class FileDisplayActivityTest5 {
+
+    @Rule
+    public ActivityTestRule<FileDisplayActivity> mActivityTestRule = new ActivityTestRule<>(FileDisplayActivity.class);
+
+    @Rule
+    public GrantPermissionRule mGrantPermissionRule =
+            GrantPermissionRule.grant(
+                    "android.permission.WRITE_EXTERNAL_STORAGE");
+
+    @Test
+    public void fileDisplayActivityTest5() {
+        ViewInteraction overflowMenuButton = onView(
+                allOf(withContentDescription("More options"),
+                        childAtPosition(
+                                childAtPosition(
+                                        withId(R.id.toolbar),
+                                        2),
+                                1),
+                        isDisplayed()));
+        overflowMenuButton.perform(click());
+
+        ViewInteraction appCompatTextView = onView(
+                allOf(withId(R.id.title), withText("Select all"),
+                        childAtPosition(
+                                childAtPosition(
+                                        withId(R.id.content),
+                                        0),
+                                0),
+                        isDisplayed()));
+        appCompatTextView.perform(click());
+
+        ViewInteraction appCompatImageView = onView(
+                allOf(withId(R.id.action_mode_close_button), withContentDescription("Done"),
+                        childAtPosition(
+                                allOf(withId(R.id.action_mode_bar),
+                                        childAtPosition(
+                                                withId(R.id.action_bar_root),
+                                                1)),
+                                1),
+                        isDisplayed()));
+        appCompatImageView.perform(click());
+
+        ViewInteraction frameLayout = onView(
+                allOf(childAtPosition(
+                        childAtPosition(
+                                allOf(withId(R.id.ListItemLayout), withContentDescription("LinearLayout-ownCloud " +
+                                        "Manual.pdf")),
+                                0),
+                        0),
+                        isDisplayed()));
+        frameLayout.check(matches(isDisplayed()));
+    }
+
+    private static Matcher<View> childAtPosition(
+            final Matcher<View> parentMatcher, final int position) {
+
+        return new TypeSafeMatcher<View>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Child at position " + position + " in parent ");
+                parentMatcher.describeTo(description);
+            }
+
+            @Override
+            public boolean matchesSafely(View view) {
+                ViewParent parent = view.getParent();
+                return parent instanceof ViewGroup && parentMatcher.matches(parent)
+                        && view.equals(((ViewGroup) parent).getChildAt(position));
+            }
+        };
+    }
+}
